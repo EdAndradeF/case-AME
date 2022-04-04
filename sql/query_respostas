@@ -1,0 +1,111 @@
+with qnt_pais as 
+(select 
+	nome
+	,pais_id
+	,count(r.id) as quantidade
+		from respondente  as r
+		  left join pais on pais.id = r.pais_id
+group by nome, pais_id
+order by quantidade desc
+)
+,
+EUA_sistem as
+(select 
+	pais_id,
+	nome,
+	count(*)
+	from respondente as r
+     join sistema_operacional as so on so.id = r.sistema_operaciona_id 
+    	where pais_id = 0 
+    	 and so.nome = 'Windows'
+group by nome ,pais_id
+)
+, 
+--26 = israel / 2 = linux
+israel_linux as
+(select 
+	 pais_id
+	 ,sistema_operaciona_id
+	 ,AVG( salario )
+	from respondente
+	where sistema_operaciona_id = 2
+	and pais_id = 26
+group by pais_id, sistema_operaciona_id 	
+)	
+,
+media_slack as
+(select
+	tamanho
+	,avg(r.salario)
+	,stddev(r.salario)
+	from respondente as r
+	join empresa as em on r.empresa_id = em.id
+ 	join resp_usa_ferramenta as rf on r.id = rf.respondente_id
+ 	where rf.ferramenta_comunic_id = 0
+group by tamanho 
+)
+,
+-- 7 = brazil / 
+hobby_diff1 as
+(select 
+	sistema_operaciona_id as sis_id
+	,round(avg(salario)::numeric, 2) media_geral
+	from respondente r
+group by sistema_operaciona_id)
+,
+hobby_diff2 as
+(select 
+	sistema_operaciona_id as sis_id
+	,round(avg(salario)::numeric, 2) media_hobby
+	from respondente r
+	 where programa_hobby = 1
+group by sistema_operaciona_id
+)
+,
+hobby_final as
+(select
+	nome sistema_operacional
+	,media_hobby
+	,media_geral
+	,(media_geral-media_hobby) dif_media
+	from hobby_diff1 as hd1
+		join hobby_diff2 as hd2 on hd1.sis_id=hd2.sis_id
+		join sistema_operacional as so on so.id = hd1.sis_id
+)
+,
+top5 as
+(select
+	pais_id
+	,avg(salario) as media_pais
+	from respondente
+group by pais_id
+order by media_pais desc
+limit 5
+)	
+
+
+select
+	pais.nome
+	,count(r.id)
+	from respondente as r
+	 join pais on r.pais_id=pais.id
+	where pais.nome = 'United States' and r.salario > 5*4787.9
+	or pais.nome = 'India' and r.salario > 5*243.52
+	or pais.nome = 'United Kingdom' and r.salario > 5*6925.63
+	or pais.nome = 'Germany' and r.salario > 5*6664
+	or pais.nome = 'Canada' and r.salario > 5*5567.68
+group by nome
+
+
+	
+--FALTANDO A QUESTAO 6
+
+
+
+
+
+
+
+
+
+
